@@ -1,0 +1,676 @@
+NUTANIX-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+    DisplayString
+      FROM RFC1213-MIB
+    enterprises, MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter64
+      FROM SNMPv2-SMI
+    TimeStamp
+      FROM SNMPv2-TC;
+
+  nutanix MODULE-IDENTITY
+    LAST-UPDATED         "201302191930Z"
+    ORGANIZATION         "Nutanix Inc."
+    CONTACT-INFO         "support@nutanix.com"
+    DESCRIPTION          "Nutanix Cluster Managment Information Base"
+    REVISION             "201302191930Z"
+    DESCRIPTION          "SNMP MIB for Nutanix Cluster software."
+    ::= { enterprises 41263 }
+
+--
+-- Cluster wide scalars starting from sub oid 501. This leaves room to add
+-- more table types in sequential oid order in future.
+--
+
+  clusterName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Name of the cluster."
+    ::= { nutanix 501 }
+
+  clusterVersion OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Current cluster version. This is the nutanix-core
+                          package version expected on all the Controller VMs."
+    ::= { nutanix 502 }
+
+  clusterStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Current Status of the cluster. This will usually be
+                          one of started or stopped"
+    ::= { nutanix 503 }
+
+  clusterTotalStorageCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total storage capacity of the cluster in bytes."
+    ::= { nutanix 504 }
+
+  clusterUsedStorageCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Number of bytes of storage used on the cluster."
+    ::= { nutanix 505 }
+
+  clusterIops OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Cluster wide average IO operations per second."
+    ::= { nutanix 506 }
+
+  clusterLatency OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Cluster wide average latency."
+    ::= { nutanix 507 }
+
+--  clusterThroughput OBJECT-TYPE
+--    SYNTAX               Counter64
+--    ACCESS               read-only
+--    STATUS               mandatory
+--    DESCRIPTION          "Cluster wide throughput."
+--    ::= { nutanix 508 }
+
+--
+-- Nutanix SNMP table definitions.
+--
+-- Software version table
+--
+
+  softwareVersionTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF svtEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table of software versions for packages on all
+                          Controller VMs."
+    ::= { nutanix 1 }
+
+  svtEntry OBJECT-TYPE
+    SYNTAX               svtEntry
+    ACCESS               not-accessible
+    STATUS               mandatory
+    DESCRIPTION          "Software version table entry containing software
+                          versions on the Controller VMs."
+    INDEX                { svtIndex }
+    ::= { softwareVersionTable 1 }
+
+  svtEntry ::= SEQUENCE {
+    svtIndex                  INTEGER,
+    svtControllerVMId         Counter64,
+    svtNutanixBootstrap       DisplayString,
+    svtNutanixInfrastructure  DisplayString,
+    svtNutanixCore            DisplayString,
+    svtNutanixToolchain       DisplayString,
+    svtNutanixServiceability  DisplayString,
+    svtLinuxKernel            DisplayString
+  }
+
+  svtIndex OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Index for software version table entries."
+    ::= { svtEntry 1 }
+
+  svtControllerVMId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { svtEntry 2 }
+
+  svtNutanixBootstrap OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "The nutanix-bootstrap software package version."
+    ::= { svtEntry 3 }
+
+  svtNutanixInfrastructure OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "The nutanix-infrastructure software package version."
+    ::= { svtEntry 4 }
+
+  svtNutanixCore OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "The nutanix-core software package version."
+    ::= { svtEntry 5 }
+
+  svtNutanixToolchain OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "The nutanix-toolchain software package version."
+    ::= { svtEntry 6 }
+
+  svtNutanixServiceability OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "The nutanix-serviceability software package version."
+    ::= { svtEntry 7 }
+
+  svtLinuxKernel OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "The linux kernel version currently installed."
+    ::= { svtEntry 8 }
+
+--
+-- Service status table
+--
+
+  serviceStatusTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF sstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table of status of each service with one row per
+                          Controller VM."
+    ::= { nutanix 2 }
+
+  sstEntry OBJECT-TYPE
+    SYNTAX               sstEntry
+    ACCESS               not-accessible
+    STATUS               mandatory
+    DESCRIPTION          "Table entry containing status of services on one
+                          node."
+    INDEX                { sstIndex }
+    ::= { serviceStatusTable 1 }
+
+  sstEntry ::= SEQUENCE {
+    sstIndex                   INTEGER,
+    sstControllerVMId          Counter64,
+    sstControllerVMStatus      DisplayString,
+    sstZeusStatus              DisplayString,
+    sstScavengerStatus         DisplayString,
+    sstMedusaStatus            DisplayString,
+    sstPithosStatus            DisplayString,
+    sstStargateStatus          DisplayString,
+    sstChronosStatus           DisplayString,
+    sstCuratorStatus           DisplayString,
+    sstPrismStatus             DisplayString,
+    sstAlertManagerStatus      DisplayString,
+    sstStatsAggregatorStatus   DisplayString,
+    sstSysStatCollectorStatus  DisplayString
+  }
+
+  sstIndex OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "A unique index for each row in the service status
+                          table."
+    ::= { sstEntry 1 }
+
+  sstControllerVMId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { sstEntry 2 }
+
+  sstControllerVMStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of the node."
+    ::= { sstEntry 3 }
+
+  sstZeusStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Zeus on the node. A comma separated list
+                          of pids of the zeus service."
+    ::= { sstEntry 4 }
+
+  sstScavengerStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Scavenger on the node. A comma separated
+                          list of pids of the scavenger service."
+    ::= { sstEntry 5 }
+
+  sstMedusaStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Medusa on the node. A comma separated list
+                          of pids of the medusa service."
+    ::= { sstEntry 6 }
+
+  sstPithosStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Pithos on the node. A comma separated list
+                          of pids of the pithos service."
+    ::= { sstEntry 7 }
+
+  sstStargateStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Stargate on the node. A comma separated
+                          list of pids of the stargate service."
+    ::= { sstEntry 8 }
+
+  sstChronosStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Chronos on the node. A comma separated list
+                          of pids of the chronos service."
+    ::= { sstEntry 9 }
+
+  sstCuratorStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Curator on the node. A comma separated list
+                          of pids of the curator service."
+    ::= { sstEntry 10 }
+
+  sstPrismStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Prism on the node. A comma separated list
+                          of pids of the prism service."
+    ::= { sstEntry 11 }
+
+  sstAlertManagerStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Alert Manager on the node. A comma
+                          separated list of pids of the alert manager service."
+    ::= { sstEntry 12 }
+
+  sstStatsAggregatorStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of Stats Aggregator on the node. A comma
+                          separated list of pids of the stats aggregator
+                          service."
+    ::= { sstEntry 13 }
+
+  sstSysStatCollectorStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Status of SysStatCollector on the node. A comma
+                          separated list of pids of the sys stat collector
+                          service."
+    ::= { sstEntry 14 }
+
+--
+-- Disk Status Table
+--
+
+  diskStatusTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF dstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table provides disk status on all CVMs."
+    ::= { nutanix 3 }
+
+  dstEntry OBJECT-TYPE
+    SYNTAX               dstEntry
+    ACCESS               not-accessible
+    STATUS               mandatory
+    DESCRIPTION          "Table entry containing status of a disk on a CVM."
+    INDEX                { dstIndex}
+    ::= { diskStatusTable 1 }
+
+  dstEntry ::= SEQUENCE {
+    dstIndex               INTEGER,
+    dstDiskId              Counter64,
+    dstControllerVMId      Counter64,
+    dstSerial              DisplayString,
+    dstNumRawBytes         Counter64,
+    dstNumTotalBytes       Counter64,
+    dstNumFreeBytes        Counter64,
+    dstNumTotalInodes      Counter64,
+    dstNumFreeInodes       Counter64,
+    dstTemperature         INTEGER
+  }
+
+  dstIndex OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "A unique index for each row in the disk status
+                          table."
+    ::= { dstEntry 1 }
+
+  dstDiskId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "A unique disk id for each disk."
+    ::= { dstEntry 2 }
+
+  dstControllerVMId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { dstEntry 3 }
+
+  dstSerial OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Disk Serial Number"
+    ::= { dstEntry 4 }
+
+  dstNumRawBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Maximum number of raw bytes available on the device."
+    ::= { dstEntry 5 }
+
+  dstNumTotalBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total number of bytes usable on the device through
+                          its file system."
+    ::= { dstEntry 6 }
+
+  dstNumFreeBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total number of bytes availabe to the non-root users
+                          on the device through its file system."
+    ::= { dstEntry 7 }
+
+  dstNumTotalInodes OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Maximum number of inodes usable on the device
+                          through its file system."
+    ::= { dstEntry 8 }
+
+  dstNumFreeInodes OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total number of inodes availabe to the non-root
+                          users on the device through its file system."
+    ::= { dstEntry 9 }
+
+  dstTemperature OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Temperature of FIO disk in centigrade."
+    ::= { dstEntry 10 }
+
+--
+-- Controller VM resource table.
+--
+
+  controllerVMResourceTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF crtEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table of resources per Controller VM."
+    ::= { nutanix 4 }
+
+  crtEntry OBJECT-TYPE
+    SYNTAX               crtEntry
+    ACCESS               not-accessible
+    STATUS               mandatory
+    DESCRIPTION          "Table entry containing resource information of
+                          one Controller VM."
+    INDEX                { crtIndex }
+    ::= { controllerVMResourceTable 1 }
+
+  crtEntry ::= SEQUENCE {
+    crtIndex           INTEGER,
+    crtControllerVMId  Counter64,
+    crtMemory          Counter64,
+    crtNumCpus         INTEGER
+  }
+
+  crtIndex OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "A unique index for each row in the CVM memory
+                          table."
+    ::= { crtEntry 1 }
+
+  crtControllerVMId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { crtEntry 2 }
+
+  crtMemory OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total memory available on a CVM."
+    ::= { crtEntry 3 }
+
+  crtNumCpus OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total number of CPUs allocated to a CVM."
+    ::= { crtEntry 4 }
+
+ --
+ -- Storage pool information table.
+ --
+
+  storagePoolInformationTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF spitEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Storage pool information in a table form."
+    ::= { nutanix 7 }
+
+  spitEntry OBJECT-TYPE
+    SYNTAX               spitEntry
+    ACCESS               not-accessible
+    STATUS               mandatory
+    DESCRIPTION          "Storage pool information table entry."
+    INDEX                { spitIndex }
+    ::= { storagePoolInformationTable 1 }
+
+  spitEntry ::= SEQUENCE {
+    spitIndex            INTEGER,
+    spitStoragePoolId    Counter64,
+    spitStoragePoolName  DisplayString,
+    spitTotalCapacity    Counter64,
+    spitUsedCapacity     Counter64,
+    spitIOPerSecond      INTEGER,
+    spitAvgLatencyUsecs  Counter64
+  }
+
+  spitIndex OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Unique index for storage pool information table
+                          entries."
+    ::= { spitEntry 1 }
+
+  spitStoragePoolId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Storage pool id."
+    ::= { spitEntry 2 }
+
+  spitStoragePoolName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Name of the storage pool."
+    ::= { spitEntry 3 }
+
+  spitTotalCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total capacity of the storage pool in bytes."
+    ::= { spitEntry 4 }
+
+  spitUsedCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Number of bytes used in the storage pool."
+    ::= { spitEntry 5 }
+
+  spitIOPerSecond OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Number of IO operations served per second from this
+                          storage pool."
+    ::= { spitEntry 6 }
+
+  spitAvgLatencyUsecs OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Average IO latency for this storage pool in
+                          microseconds."
+    ::= { spitEntry 7 }
+
+--
+-- Container information table
+--
+
+  containerInformationTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF citEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Container information in a table form."
+    ::= { nutanix 8 }
+
+  citEntry OBJECT-TYPE
+    SYNTAX               citEntry
+    ACCESS               not-accessible
+    STATUS               mandatory
+    DESCRIPTION          "Container information table entry."
+    INDEX                { citIndex }
+    ::= { containerInformationTable 1 }
+
+  citEntry ::= SEQUENCE {
+    citIndex             INTEGER,
+    citContainerId       Counter64,
+    citContainerName     DisplayString,
+    citTotalCapacity     Counter64,
+    citUsedCapacity      Counter64,
+    citIOPerSecond       INTEGER,
+    citAvgLatencyUsecs   Counter64
+  }
+
+  citIndex OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Unique index for container information table
+                          entries."
+    ::= { citEntry 1 }
+
+  citContainerId OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Container id."
+    ::= { citEntry 2 }
+
+  citContainerName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Name of the container."
+    ::= { citEntry 3 }
+
+  citTotalCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Total capacity of the container in bytes."
+    ::= { citEntry 4 }
+
+  citUsedCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Number of bytes used in the container."
+    ::= { citEntry 5 }
+
+  citIOPerSecond OBJECT-TYPE
+    SYNTAX               INTEGER
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Number of IO operations served per second from this
+                          container."
+    ::= { citEntry 6 }
+
+  citAvgLatencyUsecs OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Average IO latency for this container in
+                          microseconds."
+    ::= { citEntry 7 }
+
+--
+-- Abstract alert object.
+-- All alert data to be sent in a trap is grouped within this object. This
+-- allows alert objects to appear grouped together in certain graphical MIB
+-- viewers.
+--
+  ntxAlert OBJECT IDENTIFIER ::= {nutanix 999}
+
+  ntxAlertCreationTime   OBJECT-TYPE
+    SYNTAX               Counter64
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Alert creation Timestamp in seconds from epoch."
+    ::= {ntxAlert 1}
+
+  ntxAlertDisplayMsg     OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..1024))
+    ACCESS               read-only
+    STATUS               mandatory
+    DESCRIPTION          "Display message for the sent alert."
+    ::= {ntxAlert 2}
+
+  ntxTrap NOTIFICATION-TYPE
+    OBJECTS              { ntxAlertCreationTime, ntxAlertDisplayMsg}
+    STATUS               current
+    DESCRIPTION          "Nutanix enterprise trap"
+    ::= { nutanix 991 }
+
+END

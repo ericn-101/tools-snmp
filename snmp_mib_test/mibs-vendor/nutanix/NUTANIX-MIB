@@ -1,0 +1,1111 @@
+NUTANIX-MIB DEFINITIONS ::= BEGIN
+
+  IMPORTS
+    enterprises, MODULE-IDENTITY, OBJECT-TYPE, Integer32, Counter64,
+    NOTIFICATION-TYPE, Unsigned32
+      FROM SNMPv2-SMI
+    DisplayString
+      FROM SNMPv2-TC;
+
+  nutanix MODULE-IDENTITY
+    LAST-UPDATED         "201502171930Z"
+    ORGANIZATION         "Nutanix Inc."
+    CONTACT-INFO         "support@nutanix.com"
+    DESCRIPTION          "Nutanix Cluster Managment Information Base"
+    REVISION             "201502171930Z"
+    DESCRIPTION          "SNMP MIB for Nutanix Cluster software."
+    ::= { enterprises 41263 }
+
+--
+-- Cluster wide scalars starting from sub oid 501. This leaves room to add
+-- more table types in sequential oid order in future.
+--
+
+  clusterName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Name of the cluster."
+    ::= { nutanix 501 }
+
+  clusterVersion OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Current cluster version. This is the nutanix-core
+                          package version expected on all the Controller VMs."
+    ::= { nutanix 502 }
+
+  clusterStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Current Status of the cluster. This will usually be
+                          one of started or stopped"
+    ::= { nutanix 503 }
+
+  clusterTotalStorageCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total storage capacity of the cluster in bytes."
+    ::= { nutanix 504 }
+
+  clusterUsedStorageCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of bytes of storage used on the cluster."
+    ::= { nutanix 505 }
+
+  clusterIops OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Cluster wide average IO operations per second."
+    ::= { nutanix 506 }
+
+  clusterLatency OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Cluster wide average latency."
+    ::= { nutanix 507 }
+
+  clusterIOBandwidth OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Cluster wide IO bandwidth in KBps."
+    ::= { nutanix 508 }
+
+--
+-- Nutanix SNMP table definitions.
+--
+-- Software version table
+--
+
+  softwareVersionTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF SvtEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table of software versions for packages on all
+                          Controller VMs."
+    ::= { nutanix 1 }
+
+  svtEntry OBJECT-TYPE
+    SYNTAX               SvtEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Software version table entry containing software
+                          versions on the Controller VMs."
+    INDEX                { svtIndex }
+    ::= { softwareVersionTable 1 }
+
+  SvtEntry ::= SEQUENCE {
+    svtIndex                  Integer32,
+    svtControllerVMId         DisplayString,
+    svtNutanixBootstrap       DisplayString,
+    svtNutanixInfrastructure  DisplayString,
+    svtNutanixCore            DisplayString,
+    svtNutanixToolchain       DisplayString,
+    svtNutanixServiceability  DisplayString,
+    svtLinuxKernel            DisplayString
+  }
+
+  svtIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Index for software version table entries."
+    ::= { svtEntry 1 }
+
+  svtControllerVMId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { svtEntry 2 }
+
+  svtNutanixBootstrap OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "The nutanix-bootstrap software package version."
+    ::= { svtEntry 3 }
+
+  svtNutanixInfrastructure OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "The nutanix-infrastructure software package version."
+    ::= { svtEntry 4 }
+
+  svtNutanixCore OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "The nutanix-core software package version."
+    ::= { svtEntry 5 }
+
+  svtNutanixToolchain OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "The nutanix-toolchain software package version."
+    ::= { svtEntry 6 }
+
+  svtNutanixServiceability OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "The nutanix-serviceability software package version."
+    ::= { svtEntry 7 }
+
+  svtLinuxKernel OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "The linux kernel version currently installed."
+    ::= { svtEntry 8 }
+
+--
+-- Service status table
+--
+
+  serviceStatusTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF SstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               obsolete
+    DESCRIPTION          "Table of status of each service with one row per
+                          Controller VM."
+    ::= { nutanix 2 }
+
+  sstEntry OBJECT-TYPE
+    SYNTAX               SstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               obsolete
+    DESCRIPTION          "Table entry containing status of services on one
+                          node."
+    INDEX                { sstIndex }
+    ::= { serviceStatusTable 1 }
+
+  SstEntry ::= SEQUENCE {
+    sstIndex                   Integer32,
+    sstControllerVMId          DisplayString,
+    sstControllerVMStatus      DisplayString,
+    sstZeusStatus              DisplayString,
+    sstScavengerStatus         DisplayString,
+    sstMedusaStatus            DisplayString,
+    sstPithosStatus            DisplayString,
+    sstStargateStatus          DisplayString,
+    sstChronosStatus           DisplayString,
+    sstCuratorStatus           DisplayString,
+    sstPrismStatus             DisplayString,
+    sstAlertManagerStatus      DisplayString,
+    sstStatsAggregatorStatus   DisplayString,
+    sstSysStatCollectorStatus  DisplayString
+  }
+
+  sstIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "A unique index for each row in the service status
+                          table."
+    ::= { sstEntry 1 }
+
+  sstControllerVMId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { sstEntry 2 }
+
+  sstControllerVMStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of the node."
+    ::= { sstEntry 3 }
+
+  sstZeusStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Zeus on the node. A comma separated list
+                          of pids of the zeus service."
+    ::= { sstEntry 4 }
+
+  sstScavengerStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Scavenger on the node. A comma separated
+                          list of pids of the scavenger service."
+    ::= { sstEntry 5 }
+
+  sstMedusaStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Medusa on the node. A comma separated list
+                          of pids of the medusa service."
+    ::= { sstEntry 6 }
+
+  sstPithosStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Pithos on the node. A comma separated list
+                          of pids of the pithos service."
+    ::= { sstEntry 7 }
+
+  sstStargateStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Stargate on the node. A comma separated
+                          list of pids of the stargate service."
+    ::= { sstEntry 8 }
+
+  sstChronosStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Chronos on the node. A comma separated list
+                          of pids of the chronos service."
+    ::= { sstEntry 9 }
+
+  sstCuratorStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Curator on the node. A comma separated list
+                          of pids of the curator service."
+    ::= { sstEntry 10 }
+
+  sstPrismStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Prism on the node. A comma separated list
+                          of pids of the prism service."
+    ::= { sstEntry 11 }
+
+  sstAlertManagerStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Alert Manager on the node. A comma
+                          separated list of pids of the alert manager service."
+    ::= { sstEntry 12 }
+
+  sstStatsAggregatorStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of Stats Aggregator on the node. A comma
+                          separated list of pids of the stats aggregator
+                          service."
+    ::= { sstEntry 13 }
+
+  sstSysStatCollectorStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Status of SysStatCollector on the node. A comma
+                          separated list of pids of the sys stat collector
+                          service."
+    ::= { sstEntry 14 }
+
+--
+-- Disk Status Table
+--
+
+  diskStatusTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF DstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table provides disk status on all CVMs."
+    ::= { nutanix 3 }
+
+  dstEntry OBJECT-TYPE
+    SYNTAX               DstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table entry containing status of a disk on a CVM."
+    INDEX                { dstIndex}
+    ::= { diskStatusTable 1 }
+
+  DstEntry ::= SEQUENCE {
+    dstIndex               Integer32,
+    dstDiskId              DisplayString,
+    dstControllerVMId      DisplayString,
+    dstSerial              DisplayString,
+    dstNumRawBytes         Counter64,
+    dstNumTotalBytes       Counter64,
+    dstNumFreeBytes        Counter64,
+    dstNumTotalInodes      Counter64,
+    dstNumFreeInodes       Counter64,
+    dstAverageLatency      Counter64,
+    dstIOBandwidth         Counter64,
+    dstNumberIops          Counter64,
+    dstState               INTEGER
+  }
+
+  dstIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "A unique index for each row in the disk status
+                          table."
+    ::= { dstEntry 1 }
+
+  dstDiskId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "A unique disk id for each disk."
+    ::= { dstEntry 2 }
+
+  dstControllerVMId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Nutanix Controller VM unique identifier."
+    ::= { dstEntry 3 }
+
+  dstSerial OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Disk Serial Number"
+    ::= { dstEntry 4 }
+
+  dstNumRawBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Maximum number of raw bytes available on the device."
+    ::= { dstEntry 5 }
+
+  dstNumTotalBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of bytes usable on the device through
+                          its file system."
+    ::= { dstEntry 6 }
+
+  dstNumFreeBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of bytes availabe to the non-root users
+                          on the device through its file system."
+    ::= { dstEntry 7 }
+
+  dstNumTotalInodes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Maximum number of inodes usable on the device
+                          through its file system."
+    ::= { dstEntry 8 }
+
+  dstNumFreeInodes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               obsolete
+    DESCRIPTION          "Total number of inodes availabe to the non-root
+                          users on the device through its file system."
+    ::= { dstEntry 9 }
+
+  dstAverageLatency OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Average IO latency per micro seconds for the disk."
+    ::= { dstEntry 10 }
+
+  dstIOBandwidth OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "IO bandwidth in KBps for the disk."
+    ::= { dstEntry 11 }
+
+  dstNumberIops OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number IO per seconds for the disk."
+    ::= { dstEntry 12 }
+
+  dstState OBJECT-TYPE
+    SYNTAX               INTEGER {
+                         online(1),
+                         offline(2)
+                         }
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "State of the disk."
+    ::= { dstEntry 13 }
+--
+-- Controller VM resource table.
+--
+
+  controllerVMResourceTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF CrtEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table of resources per Controller VM."
+    ::= { nutanix 4 }
+
+  crtEntry OBJECT-TYPE
+    SYNTAX               CrtEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table entry containing resource information of
+                          one Controller VM."
+    INDEX                { crtIndex }
+    ::= { controllerVMResourceTable 1 }
+
+  CrtEntry ::= SEQUENCE {
+    crtIndex           Integer32,
+    crtControllerVMId  DisplayString,
+    crtMemory          Counter64,
+    crtNumCpus         Integer32,
+    crtName            DisplayString
+  }
+
+  crtIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "A unique index for each row in the CVM memory
+                          table."
+    ::= { crtEntry 1 }
+
+  crtControllerVMId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { crtEntry 2 }
+
+  crtMemory OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total memory available on a CVM."
+    ::= { crtEntry 3 }
+
+  crtNumCpus OBJECT-TYPE
+    SYNTAX               Integer32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of CPUs allocated to a CVM."
+    ::= { crtEntry 4 }
+
+  crtName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Name of the Nutanix COntroller VM."
+    ::= { crtEntry 5 }
+
+ --
+ -- Storage pool information table.
+ --
+
+  storagePoolInformationTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF SpitEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Storage pool information in a table form."
+    ::= { nutanix 7 }
+
+  spitEntry OBJECT-TYPE
+    SYNTAX               SpitEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Storage pool information table entry."
+    INDEX                { spitIndex }
+    ::= { storagePoolInformationTable 1 }
+
+  SpitEntry ::= SEQUENCE {
+    spitIndex            Integer32,
+    spitStoragePoolId    DisplayString,
+    spitStoragePoolName  DisplayString,
+    spitTotalCapacity    Counter64,
+    spitUsedCapacity     Counter64,
+    spitIOPerSecond      Integer32,
+    spitAvgLatencyUsecs  Counter64,
+    spitIOBandwidth      Counter64
+  }
+
+  spitIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Unique index for storage pool information table
+                          entries."
+    ::= { spitEntry 1 }
+
+  spitStoragePoolId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Storage pool id."
+    ::= { spitEntry 2 }
+
+  spitStoragePoolName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Name of the storage pool."
+    ::= { spitEntry 3 }
+
+  spitTotalCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total capacity of the storage pool in bytes."
+    ::= { spitEntry 4 }
+
+  spitUsedCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of bytes used in the storage pool."
+    ::= { spitEntry 5 }
+
+  spitIOPerSecond OBJECT-TYPE
+    SYNTAX               Integer32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of IO operations served per second from this
+                          storage pool."
+    ::= { spitEntry 6 }
+
+  spitAvgLatencyUsecs OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Average IO latency for this storage pool in
+                          microseconds."
+    ::= { spitEntry 7 }
+
+  spitIOBandwidth OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "IO bandwidth in KBps for the storage pool."
+    ::= { spitEntry 8 }
+
+--
+-- Container information table
+--
+
+  containerInformationTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF CitEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Container information in a table form."
+    ::= { nutanix 8 }
+
+  citEntry OBJECT-TYPE
+    SYNTAX               CitEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Container information table entry."
+    INDEX                { citIndex }
+    ::= { containerInformationTable 1 }
+
+  CitEntry ::= SEQUENCE {
+    citIndex             Integer32,
+    citContainerId       DisplayString,
+    citContainerName     DisplayString,
+    citTotalCapacity     Counter64,
+    citUsedCapacity      Counter64,
+    citIOPerSecond       Integer32,
+    citAvgLatencyUsecs   Counter64,
+    citIOBandwidth       Counter64
+  }
+
+  citIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Unique index for container information table
+                          entries."
+    ::= { citEntry 1 }
+
+  citContainerId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Container id."
+    ::= { citEntry 2 }
+
+  citContainerName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Name of the container."
+    ::= { citEntry 3 }
+
+  citTotalCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total capacity of the container in bytes."
+    ::= { citEntry 4 }
+
+  citUsedCapacity OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of bytes used in the container."
+    ::= { citEntry 5 }
+
+  citIOPerSecond OBJECT-TYPE
+    SYNTAX               Integer32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of IO operations served per second from this
+                          container."
+    ::= { citEntry 6 }
+
+  citAvgLatencyUsecs OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Average IO latency for this container in
+                          microseconds."
+    ::= { citEntry 7 }
+
+  citIOBandwidth OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "IO bandwidth in KBps for the container."
+    ::= { citEntry 8 }
+
+--
+-- Hypervisor information table
+--
+
+  hypervisorInformationTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF HypervisorEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Hypervisor information in a table form."
+    ::= { nutanix 9 }
+
+  hypervisorEntry OBJECT-TYPE
+    SYNTAX               HypervisorEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Vm information table entry."
+    INDEX                { hypervisorIndex }
+    ::= { hypervisorInformationTable 1 }
+
+  HypervisorEntry ::= SEQUENCE {
+    hypervisorIndex               Integer32,
+    hypervisorId                  DisplayString,
+    hypervisorName                DisplayString,
+    hypervisorVmCount             Unsigned32,
+    hypervisorCpuCount            Unsigned32,
+    hypervisorCpuUsagePercent     Unsigned32,
+    hypervisorMemory              Counter64,
+    hypervisorMemoryUsagePercent  Unsigned32,
+    hypervisorReadIOPerSecond     Unsigned32,
+    hypervisorWriteIOPerSecond    Unsigned32,
+    hypervisorAverageLatency      Counter64,
+    hypervisorIOBandwidth         Counter64,
+    hypervisorRxBytes             Counter64,
+    hypervisorTxBytes             Counter64,
+    hypervisorRxDropCount         Counter64,
+    hypervisorTxDropCount         Counter64
+  }
+
+  hypervisorIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Unique index for hypervisor information table
+                          entries."
+    ::= { hypervisorEntry 1 }
+
+  hypervisorId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Hypervisor Id for the hypervisor."
+    ::= { hypervisorEntry 2 }
+
+  hypervisorName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Name of the Hypervisor."
+    ::= { hypervisorEntry 3 }
+
+  hypervisorVmCount OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of VM configured on the hypervisor."
+    ::= { hypervisorEntry 4 }
+
+  hypervisorCpuCount OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of CPU threads present in the
+                          hypervisor."
+    ::= { hypervisorEntry 5 }
+
+  hypervisorCpuUsagePercent OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "CPU usage percentage of the hypervisor."
+    ::= { hypervisorEntry 6 }
+
+  hypervisorMemory OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total memory available on the hypervisor in bytes."
+    ::= { hypervisorEntry 7 }
+
+  hypervisorMemoryUsagePercent OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Memory usage percentage of the hypervisor."
+    ::= { hypervisorEntry 8 }
+
+  hypervisorReadIOPerSecond OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of read IO operations served per second on
+                          this hypervisor."
+    ::= { hypervisorEntry 9 }
+
+  hypervisorWriteIOPerSecond OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of write IO operations served per second on
+                          this hypervisor."
+    ::= { hypervisorEntry 10 }
+
+  hypervisorAverageLatency OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Average IO latency per micro seconds of the
+                          hypervisor."
+    ::= { hypervisorEntry 11 }
+
+  hypervisorIOBandwidth OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "IO bandwidth in KBps of the hypervisor."
+    ::= { hypervisorEntry 12 }
+
+  hypervisorRxBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of bytes recieved on the hypervisor."
+    ::= { hypervisorEntry 13 }
+
+  hypervisorTxBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of bytes transmitted from the
+                          hypervisor."
+    ::= { hypervisorEntry 14 }
+
+  hypervisorRxDropCount OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of packets dropped while receiving
+                          on the hypervisor."
+    ::= { hypervisorEntry 15 }
+
+  hypervisorTxDropCount OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of packets dropped while transmiting
+                          from hypervisor."
+    ::= { hypervisorEntry 16 }
+--
+-- VM information table
+--
+
+  vmInformationTable OBJECT-TYPE
+    SYNTAX               SEQUENCE OF VmEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Vm information in a table form."
+    ::= { nutanix 10 }
+
+  vmEntry OBJECT-TYPE
+    SYNTAX               VmEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Vm information table entry."
+    INDEX                { vmIndex }
+    ::= { vmInformationTable 1 }
+
+  VmEntry ::= SEQUENCE {
+    vmIndex               Integer32,
+    vmId                  DisplayString,
+    vmName                DisplayString,
+    vmHypervisorId        DisplayString,
+    vmPowerState          DisplayString,
+    vmCpuCount            Unsigned32,
+    vmCpuUsagePercent     Unsigned32,
+    vmMemory              Counter64,
+    vmMemoryUsagePercent  Unsigned32,
+    vmReadIOPerSecond     Unsigned32,
+    vmWriteIOPerSecond    Unsigned32,
+    vmAverageLatency      Counter64,
+    vmIOBandwidth         Counter64,
+    vmRxBytes             Counter64,
+    vmTxBytes             Counter64,
+    vmRxDropCount         Counter64,
+    vmTxDropCount         Counter64
+  }
+
+  vmIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Unique index for VM information table
+                          entries."
+    ::= { vmEntry 1 }
+
+  vmId OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Nutanix unique identifier for VM."
+    ::= { vmEntry 2 }
+
+  vmName OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Name of the VM."
+    ::= { vmEntry 3 }
+
+  vmHypervisorId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Hypervisor id on which the VM resides."
+    ::= { vmEntry 4 }
+
+  vmPowerState OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Power state of the VM."
+    ::= { vmEntry 5 }
+
+  vmCpuCount OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of CPUs allocated to the VM."
+    ::= { vmEntry 6 }
+
+  vmCpuUsagePercent OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "CPU usage percentage of the VM."
+    ::= { vmEntry 7 }
+
+  vmMemory OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total memory available on the VM in bytes."
+    ::= { vmEntry 8 }
+
+  vmMemoryUsagePercent OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Memory usage percentage of the VM."
+    ::= { vmEntry 9 }
+
+  vmReadIOPerSecond OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of read IO operations served per second on
+                          this VM."
+    ::= { vmEntry 10 }
+
+  vmWriteIOPerSecond OBJECT-TYPE
+    SYNTAX               Unsigned32
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Number of write IO operations served per second on
+                          this VM."
+    ::= { vmEntry 11 }
+
+  vmAverageLatency OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Average IO latency per micro seconds of the VM."
+    ::= { vmEntry 12 }
+
+  vmIOBandwidth OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "IO bandwidth in KBps of the VM."
+    ::= { vmEntry 13 }
+
+  vmRxBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of bytes recieved on the VM."
+    ::= { vmEntry 14 }
+
+  vmTxBytes OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of bytes transmitted from the VM."
+    ::= { vmEntry 15 }
+
+  vmRxDropCount OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of packets dropped while receiving
+                          on the VM."
+    ::= { vmEntry 16 }
+
+  vmTxDropCount OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Total number of packets dropped while transmiting
+                          from VM."
+    ::= { vmEntry 17 }
+
+--
+-- Controller status table
+--
+
+  controllerStatusTable  OBJECT-TYPE
+    SYNTAX               SEQUENCE OF CstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table of status of essential services with one row
+                          per Controller VM."
+    ::= { nutanix 11 }
+
+  cstEntry OBJECT-TYPE
+    SYNTAX               CstEntry
+    MAX-ACCESS           not-accessible
+    STATUS               current
+    DESCRIPTION          "Table entry containing status of essential services
+                          on one node."
+    INDEX                { cstIndex }
+    ::= { controllerStatusTable 1 }
+
+  CstEntry ::= SEQUENCE {
+    cstIndex                   Integer32,
+    cstControllerVMId          DisplayString,
+    cstControllerVMStatus      DisplayString,
+    cstDataServiceStatus       DisplayString,
+    cstMetadataServiceStatus   DisplayString
+  }
+
+  cstIndex OBJECT-TYPE
+    SYNTAX               Integer32 (1..2147483647)
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "A unique index for each row in the controller status
+                          table."
+    ::= { cstEntry 1 }
+
+  cstControllerVMId OBJECT-TYPE
+    SYNTAX               DisplayString
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Nutanix Controller VM Id."
+    ::= { cstEntry 2 }
+
+  cstControllerVMStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Status of the node."
+    ::= { cstEntry 3 }
+
+  cstDataServiceStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Status of core data services on the Controller VM."
+    ::= { cstEntry 4 }
+
+  cstMetadataServiceStatus OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..255))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Status of metadata services on the Controller VM."
+    ::= { cstEntry 5 }
+
+
+--
+-- Abstract alert object.
+-- All alert data to be sent in a trap is grouped within this object. This
+-- allows alert objects to appear grouped together in certain graphical MIB
+-- viewers.
+--
+  ntxAlert OBJECT IDENTIFIER ::= {nutanix 999}
+
+  ntxAlertCreationTime   OBJECT-TYPE
+    SYNTAX               Counter64
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Alert creation Timestamp in seconds from epoch."
+    ::= {ntxAlert 1}
+
+  ntxAlertDisplayMsg     OBJECT-TYPE
+    SYNTAX               DisplayString (SIZE (0..1024))
+    MAX-ACCESS           read-only
+    STATUS               current
+    DESCRIPTION          "Display message for the sent alert."
+    ::= {ntxAlert 2}
+
+  ntxTrap NOTIFICATION-TYPE
+    OBJECTS              { ntxAlertCreationTime, ntxAlertDisplayMsg }
+    STATUS               current
+    DESCRIPTION          "Nutanix enterprise trap"
+    ::= { nutanix 991 }
+
+END
